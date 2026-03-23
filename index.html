@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Harbor Departures Board</title>
+  <style>
+    body {
+      background: black;
+      color: #FFD700;
+      font-family: monospace;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1 {
+      font-size: 50px;
+      margin: 20px 0;
+      letter-spacing: 3px;
+    }
+
+    table {
+      margin: auto;
+      width: 90%;
+      border-collapse: collapse;
+      font-size: 28px;
+    }
+
+    th, td {
+      padding: 15px;
+      border-bottom: 2px solid #333;
+    }
+
+    th {
+      color: white;
+    }
+
+    /* STATUS COLORS */
+    .ONTIME { color: white; }
+    .BOARDING { color: lime; }
+    .DEPARTED { color: red; }
+
+    /* MOBILE IMPROVEMENTS */
+    @media(max-width: 600px){
+      h1 { font-size: 36px; }
+      table { font-size: 18px; }
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>🚢 HARBOR DEPARTURES</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>BOAT</th>
+      <th>DESTINATION</th>
+      <th>TIME</th>
+      <th>STATUS</th>
+    </tr>
+  </thead>
+  <tbody id="board"></tbody>
+</table>
+
+<script>
+  const sheetyEndpoint = "https://api.sheety.co/068dd8d8cd20dc5a09a361dcac427d5f/terminal2/sheet1";
+
+  async function updateBoard() {
+    try {
+      const response = await fetch(sheetyEndpoint);
+      const json = await response.json();
+      const rows = json.sheet1 || [];
+
+      const board = document.getElementById("board");
+      board.innerHTML = "";
+
+      rows.forEach(row => {
+        const boat = row.boat || "";
+        const dest = row.destination || "";
+        const time = row.time || "";
+        const statusRaw = (row.status || "").toUpperCase().trim();
+        
+        // Make status class safe
+        const safeStatus = ["ONTIME", "BOARDING", "DEPARTED"].includes(statusRaw) 
+          ? statusRaw 
+          : "ONTIME";
+
+        const displayStatus = safeStatus === "ONTIME" 
+          ? "ON TIME" 
+          : safeStatus;
+
+        board.innerHTML += `
+          <tr>
+            <td>${boat}</td>
+            <td>${dest}</td>
+            <td>${time}</td>
+            <td class="${safeStatus}">${displayStatus}</td>
+          </tr>
+        `;
+      });
+    } catch (err) {
+      console.error("Error fetching board data:", err);
+    }
+  }
+
+  // first load and then every 10 sec
+  updateBoard();
+  setInterval(updateBoard, 10000);
+</script>
+
+</body>
+</html>
